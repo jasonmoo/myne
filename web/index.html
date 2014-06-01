@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>myne</title>
+</head>
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+<style>
+	* { margin:0; padding:0; }
+	body, html { overflow: hidden; height:100%; width:100%; }
+
+	div {
+		position: absolute;
+		width:100%; height:100%;
+		opacity:.2;
+		background: url(soda.jpg);
+		background-size:   100% 100%;
+		background-repeat: no-repeat;
+		z-index: -10;
+	}
+
+	textarea {
+		display:block; position:absolute;
+		top:0; left:0;
+		width:25%; height:100%;
+		padding:0 .3% 0 1.2%;
+		line-height: 1.3em;
+		border:0;
+
+		background: white;
+		scroll:auto; opacity:.4;
+
+		font-family: 'Roboto', sans-serif;
+		font-size: 12px;
+	}
+	textarea:focus {
+		opacity: .6;
+	}
+
+	svg {
+		display:block; position:absolute;
+		top:0; left:26.5%;
+	}
+
+	.node circle { fill: #fff; stroke: steelblue; stroke-width: 1.5px; }
+	.node { font: 10px sans-serif;}
+	.link { fill: none; stroke: #999; stroke-width: .5px; }
+
+</style>
+<body>
+
+<div></div>
+
+<form>
+
+<textarea name="song" spellcheck='false'>
+
+Hit you with no delayin so what you sayin yo? (uh)
+Silly with my nine milli, what the deally yo? (what?)
+When I be on the mic yes I do my duty yo
+Wild up in the club like we wild in the stud-io (uh)
+You don't wanna VIOLATE nigga really and truly yo (uh)
+My main thug nigga named Julio he moody yo (what?)
+Type of nigga that'll slap you with the tool-io (blaow!)
+Bitch nigga scared to death, act fruity yo (uh)
+Fuck that! Look at shorty, she a little cutie yo (yeah)
+The way she shake it make me wanna get all in the booty yo (whoo!)
+Top miss, just hit the bangin bitches in videos (huh?)
+Whylin with my freak like we up in the freak shows (damn)
+Hit you with the shit make you feel it all in your toes (yeah)
+Hot shit got all you niggaz in wet clothes (take it off)
+Stylin my metaphors when I formulate my flows (uh)
+If you don't know you fuckin with lyrical player pros, like that
+
+[Busta Rhymes - Put your hands where my eyes can see]
+
+
+(this is an editable text area)
+</textarea>
+
+</form>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>
+
+	function draw_graph() {
+
+		var text = $("textarea").val();
+
+		$.ajax({
+			type: "POST",
+			url: "http://localhost:8080/parse",
+			data: {song: text},
+			success: function(root) {
+
+				$('svg').remove();
+
+				var tree = d3.layout.tree()
+					.size([360, (window.innerHeight/2) - 80])
+					.separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; });
+
+				var diagonal = d3.svg.diagonal.radial()
+					.projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
+
+				var svg = d3.select("body").append("svg")
+					.attr("width", window.innerWidth*.735)
+					.attr("height", window.innerHeight)
+				  .append("g")
+					.attr("transform", "translate(" + (window.innerWidth*.735) / 2 + "," + window.innerHeight / 2 + ")");
+
+				var nodes = tree.nodes(root),
+					links = tree.links(nodes);
+
+				var link = svg.selectAll(".link")
+					.data(links)
+					.enter().append("path")
+					.attr("class", "link")
+					.attr("d", diagonal);
+
+				var node = svg.selectAll(".node")
+					.data(nodes)
+					.enter().append("g")
+					.attr("class", "node")
+					.attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+
+				node.append("circle")
+					.attr("r", 4.5);
+
+				node.append("text")
+					.attr("dy", ".31em")
+					.attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+					.attr("transform", function(d) { return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)"; })
+					.text(function(d) { return d.value || d.name; });
+
+			}
+		});
+
+	}
+
+	function redraw(e) {
+		clearTimeout(redraw.timeout);
+		redraw.timeout = setTimeout(draw_graph, 200);
+	}
+
+	$("textarea").keyup(redraw);
+	$(window).resize(redraw);
+
+	draw_graph();
+
+</script>
+
+
+</body>
+</html>
