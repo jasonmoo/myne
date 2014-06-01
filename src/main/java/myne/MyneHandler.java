@@ -1,19 +1,23 @@
 package myne;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.undertow.Handlers;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormData;
 import io.undertow.server.handlers.form.FormDataParser;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.Headers;
+import io.undertow.util.Methods;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.nio.ByteBuffer;
+import java.util.Deque;
 import java.util.Objects;
+import java.util.logging.Handler;
 
 /**
  * Handles the JSON test.
@@ -33,14 +37,28 @@ final class MyneHandler implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
 
-        FormDataParser formParser = FormParserFactory.builder().build().createParser(exchange);
-        FormData formData = formParser.parseBlocking();
+        if (exchange.getRequestMethod() != Methods.POST) {
+            exchange.setResponseCode(405);
+            exchange.getResponseSender().send("Unsupported METHOD");
+            return;
+        }
 
         String song = "";
 
-        FormData.FormValue param = formData.get("song").getFirst();
-        if (param != null && !param.isFile()) {
-            song = param.getValue();
+        try {
+
+            FormDataParser formParser = FormParserFactory.builder().build().createParser(exchange);
+            FormData formData = formParser.parseBlocking();
+            Deque<FormData.FormValue> song_param = formData.get("song");
+            FormData.FormValue param = song_param.getFirst();
+            if (param != null && !param.isFile()) {
+                song = param.getValue();
+            }
+
+        } catch (Exception e) {
+            exchange.setResponseCode(400);
+            exchange.getResponseSender().send("Missing required POST variable 'song'");
+            return;
         }
 
         try {
@@ -64,7 +82,13 @@ final class MyneHandler implements HttpHandler {
             );
 
         } catch (Exception e) {
+
             e.printStackTrace();
+
+            exchange.setResponseCode(400);
+            exchange.getResponseSender().send("Unable to parse dat shit");
+            return;
+
         }
 
 

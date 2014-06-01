@@ -3,23 +3,151 @@
 <head>
 	<title>myne</title>
 </head>
+<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 <style>
-	textarea { width:80%; height:400px; scroll:auto; }
-	input { display:block; }
+	body, html { overflow: hidden; }
+	.node circle {
+	  fill: #fff;
+	  stroke: steelblue;
+	  stroke-width: 1.5px;
+	}
+
+	.node {
+	  font: 10px sans-serif;
+	}
+
+	.link {
+	  fill: none;
+	  stroke: #ccc;
+	  stroke-width: 1.5px;
+	}
+
+	form {
+		display:block; position:absolute;
+		top:0; left:0;
+		width:340px; opacity: .4;
+	}
+	svg {
+		margin-left: 12.5%;
+	}
+	textarea {
+		width:340px; scroll:auto;
+		border:0;
+		padding:0 0 0 15px; line-height: 1.3em;
+		font-family: 'Roboto', sans-serif;
+		font-size: 12px;
+	}
 
 </style>
 <body>
 
-<form method="POST" action="http://localhost:8080/parse">
-
-<textarea name="song">
 
 
+<form>
+
+<textarea name="song" spellcheck='false'>
+
+Hit you with no delayin so what you sayin yo? (uh)
+Silly with my nine milli, what the deally yo? (what?)
+When I be on the mic yes I do my duty yo
+Wild up in the club like we wild in the stud-io (uh)
+You don't wanna VIOLATE nigga really and truly yo (uh)
+My main thug nigga named Julio he moody yo (what?)
+Type of nigga that'll slap you with the tool-io (blaow!)
+Bitch nigga scared to death, act fruity yo (uh)
+Fuck that! Look at shorty, she a little cutie yo (yeah)
+The way she shake it make me wanna get all in the booty yo (whoo!)
+Top miss, just hit the bangin bitches in videos (huh?)
+Whylin with my freak like we up in the freak shows (damn)
+Hit you with the shit make you feel it all in your toes (yeah)
+Hot shit got all you niggaz in wet clothes (take it off)
+Stylin my metaphors when I formulate my flows (uh)
+If you don't know you fuckin with lyrical player pros, like that
+
+[Busta Rhymes - Put your hands where my eyes can see]
+
+
+(this is an editable text area)
 </textarea>
 
-<input type="submit" />
-
 </form>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script>
+
+	var timeout;
+
+	$("textarea").keyup(function(e) {
+		clearTimeout(timeout);
+		timeout = setTimeout(function() {
+			draw_graph(e);
+		}, 200);
+	});
+
+	draw_graph();
+
+	function draw_graph(e) {
+
+			e && e.preventDefault();
+
+			var text = $("textarea").val();
+
+			$.ajax({
+				type: "POST",
+				url: "http://localhost:8080/parse",
+				data: {song: text},
+				success: function(root) {
+
+					$('svg').remove();
+					$('textarea').height(window.innerHeight);
+
+					var diameter = window.innerHeight;
+
+					var tree = d3.layout.tree()
+						.size([360, diameter / 2 - 60])
+						.separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; });
+
+					var diagonal = d3.svg.diagonal.radial()
+						.projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
+
+					var svg = d3.select("body").append("svg")
+						.attr("width", window.innerWidth)
+						.attr("height", window.innerHeight)
+					  .append("g")
+						.attr("transform", "translate(" + window.innerWidth / 2 + "," + window.innerHeight / 2 + ")");
+
+					var nodes = tree.nodes(root),
+						links = tree.links(nodes);
+
+					var link = svg.selectAll(".link")
+						.data(links)
+						.enter().append("path")
+						.attr("class", "link")
+						.attr("d", diagonal);
+
+					var node = svg.selectAll(".node")
+						.data(nodes)
+						.enter().append("g")
+						.attr("class", "node")
+						.attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+
+					node.append("circle")
+						.attr("r", 4.5);
+
+					node.append("text")
+						.attr("dy", ".31em")
+						.attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+						.attr("transform", function(d) { return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)"; })
+						.text(function(d) { return d.value || d.name; });
+
+				}
+			});
+
+		}
+
+</script>
+
 
 </body>
 </html>

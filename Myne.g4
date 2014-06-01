@@ -2,7 +2,7 @@ grammar Myne;
 
 fragment COMMA_: ',' ;
 
-WORD: [a-zA-Z\-\']+ ;
+WORD: [a-zA-Z0-9\-'’]+ ;
 
 PUNCTUATION: [!?.]+ ;
 
@@ -25,7 +25,7 @@ stanza:
 ;
 
 verse:
-	sentence+ NEWLINE
+	sentence+ NEWLINE?
 ;
 
 sentence:

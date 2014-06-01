@@ -5,6 +5,7 @@ import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.io.UndertowInputStream;
+import io.undertow.server.HttpHandler;
 import io.undertow.util.Headers;
 
 import java.io.IOException;
@@ -34,20 +35,21 @@ public final class MyneServer {
     // thread-safe as long as not reconfigured after server starts
     final ObjectMapper objectMapper = new ObjectMapper();
 
+      HttpHandler routes = Handlers.path()
+              .addPrefixPath("/parse", new MyneHandler(objectMapper));
+
+      routes = Handlers.header(routes, "Access-Control-Allow-Origin", "*");
+      routes = Handlers.header(routes, Headers.SERVER_STRING, "Myne Server");
+
     Undertow.builder()
-        .addListener(
+        .addHttpListener(
           Integer.parseInt(properties.getProperty("web.port")),
           properties.getProperty("web.host")
         )
         .setBufferSize(1024 * 16)
         .setIoThreads(Runtime.getRuntime().availableProcessors() * 2) //this seems slightly faster in some configurations
         .setServerOption(UndertowOptions.ALWAYS_SET_KEEP_ALIVE, false) //don't send a keep-alive header for HTTP/1.1 requests, as it is not required
-        .setHandler(
-            Handlers.header(
-              Handlers.path()
-                .addPrefixPath("/parse", new MyneHandler(objectMapper))
-            , Headers.SERVER_STRING, "Myne Server")
-        )
+        .setHandler(routes)
         .setWorkerThreads(200)
         .build()
         .start();
