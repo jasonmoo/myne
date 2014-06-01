@@ -36,7 +36,7 @@ public final class MyneServer {
     final ObjectMapper objectMapper = new ObjectMapper();
 
       HttpHandler routes = Handlers.path()
-              .addPrefixPath("/parse", new MyneHandler(objectMapper));
+              .addPrefixPath("/projects/myne/parse", new MyneHandler(objectMapper));
 
       routes = Handlers.header(routes, "Access-Control-Allow-Origin", "*");
       routes = Handlers.header(routes, Headers.SERVER_STRING, "Myne Server");
