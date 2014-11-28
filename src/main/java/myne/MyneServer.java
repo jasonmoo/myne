@@ -6,11 +6,14 @@ import io.undertow.Undertow;
 import io.undertow.UndertowOptions;
 import io.undertow.io.UndertowInputStream;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.resource.FileResourceManager;
 import io.undertow.util.Headers;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.io.File;
+
 
 /**
  * An implementation of the TechEmpower benchmark tests using the Undertow web
@@ -36,7 +39,8 @@ public final class MyneServer {
     final ObjectMapper objectMapper = new ObjectMapper();
 
       HttpHandler routes = Handlers.path()
-              .addPrefixPath("/projects/myne/parse", new MyneHandler(objectMapper));
+              .addPrefixPath("/projects/myne/parse", new MyneHandler(objectMapper))
+              .addPrefixPath("/", Handlers.resource(new FileResourceManager(new File("web"), 10)));
 
       routes = Handlers.header(routes, "Access-Control-Allow-Origin", "*");
       routes = Handlers.header(routes, Headers.SERVER_STRING, "Myne Server");

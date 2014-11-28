@@ -5,7 +5,7 @@ BUILD_GRAMMARS=${1}
 if [[ -n $BUILD_GRAMMARS ]]; then
 
 	echo "Building grammar"             &&
-	java -jar antlr-4.2.2-complete.jar  \
+	java -jar antlr-4.4-complete.jar    \
 		 -o src/main/java/myne          \
 		 -package myne                  \
 		 Myne.g4
@@ -18,4 +18,4 @@ fi
 
 mvn clean compile assembly:single &&
 
-java -jar target/myne-1.0-jar-with-dependencies.jar
+java -jar target/myne-1.0.1-jar-with-dependencies.jar
